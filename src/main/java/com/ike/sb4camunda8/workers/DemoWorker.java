@@ -47,8 +47,8 @@ public class DemoWorker {
     }
 
     @JobWorker(type = "request-api")
-    public void handleJobFoo(@Variable(name = "url") String key) {
-        var resp = restTemplate.getForEntity("www.github.com", String.class);
+    public void handleJobFoo() {
+        var resp = restTemplate.getForEntity("https://www.github.com", String.class);
         String body = resp.getBody();
         log.info(body);
     }

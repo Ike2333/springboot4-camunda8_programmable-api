@@ -21,9 +21,14 @@ public class RoutesService {
     }
 
     @Transactional
-    public RoutesDto create(DeployReq req){
+    public RoutesDto create(DeployReq req) {
         var r = entityDtoMapper.convertDeployReqToRoutesEntity(req);
         var saved = routesRepository.save(r);
         return entityDtoMapper.convertRoutesToRoutesDto(saved);
+    }
+
+    @Transactional
+    public void turnoff(Long id) {
+        routesRepository.updateEnableById(false, id);
     }
 }

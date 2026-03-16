@@ -8,13 +8,14 @@ import com.ike.sb4camunda8.service.RoutesService;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.search.enums.JobKind;
 import io.camunda.client.api.search.response.Job;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * @author <a href=mailto://idiotpre@outlook.com>IKE</a> 13/3/2026
@@ -22,7 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 @RestController
 @RequestMapping("/admin/routes")
 public class RouteAdminController {
-
+    private static final Logger log = LoggerFactory.getLogger(RouteAdminController.class);
     private final CamundaClient camundaClient;
     private final RoutesService routesService;
     private final RouteRegisterService routeRegisterService;
@@ -40,8 +41,8 @@ public class RouteAdminController {
     public String deployBpmnXml(/*@RequestBody DeployReq req*/) {
         // 演示使用, 实际数据应通过请求传输
         var req = new DeployReq(
-                "test",
-                SuppHttpMethod.GET,
+                "testPost",
+                SuppHttpMethod.POST,
                 "/testflow",
                 """
                         <?xml version="1.0" encoding="UTF-8"?>
@@ -122,8 +123,12 @@ public class RouteAdminController {
         stringRedisTemplate.convertAndSend("route-event-update", created);
 
         // 向camunda部署工作流, 并在springboot应用中注册一个可以调用该工作流的自定义路由
-/// FIXME: 为确保分布式一致性, 此处应该通过mq广播到每个节点
-        routeRegisterService.register(created);
+        try {
+            routeRegisterService.register(created);
+        } catch (Exception e) {
+            routesService.turnoff(created.id());
+            log.error("当前流程无法运行 [{}]", created.name(), e);
+        }
 
         return "Route registered: " + created.method() + " " + created.path();
     }

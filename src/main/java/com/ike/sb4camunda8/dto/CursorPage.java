@@ -9,4 +9,5 @@ public record CursorPage<T>(
         List<T> content,
         String after,
         String before
-) {}
+) {
+}

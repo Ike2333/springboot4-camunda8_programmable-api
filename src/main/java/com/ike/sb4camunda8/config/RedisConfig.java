@@ -31,7 +31,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory factory){
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory factory) {
         var r = new StringRedisTemplate();
         r.setConnectionFactory(factory);
         StringRedisSerializer ks = new StringRedisSerializer();

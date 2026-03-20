@@ -4,6 +4,7 @@ import com.ike.sb4camunda8.config.DynamicRouteRegistry;
 import com.ike.sb4camunda8.dto.RoutesDto;
 import io.camunda.client.CamundaClient;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.function.ServerResponse;
 
 /**
  * 注册流程:
@@ -44,4 +45,11 @@ public class RouteRegisterService {
         );
     }
 
+    public void cancel(RoutesDto dto) {
+        registry.cancel(
+                dto.method().name(),
+                dto.path(),
+                r -> workflowService.cancelWorkflow(dto.id())
+        );
+    }
 }

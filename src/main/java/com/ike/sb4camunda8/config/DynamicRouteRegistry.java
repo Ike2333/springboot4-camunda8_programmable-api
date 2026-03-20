@@ -16,9 +16,12 @@ public class DynamicRouteRegistry {
 
     private final Map<String, HandlerFunction<ServerResponse>> routes = new ConcurrentHashMap<>();
 
-    // FIXME: 路由应被全量替换, 确保可用性
     public void register(String method, String path, HandlerFunction<ServerResponse> handler) {
         routes.put(method + ":" + path, handler);
+    }
+
+    public void cancel(String method, String path, HandlerFunction<ServerResponse> handler) {
+        routes.remove(method + ":" + path, handler);
     }
 
     public Optional<HandlerFunction<ServerResponse>> find(String method, String path) {

@@ -27,3 +27,9 @@ camunda:
     grpc-address: http://127.0.0.1:26500
 server:
   port: 9999
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /v3/swagger

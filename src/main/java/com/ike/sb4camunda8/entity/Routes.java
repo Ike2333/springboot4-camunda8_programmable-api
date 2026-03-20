@@ -26,6 +26,7 @@ public class Routes {
     @Column(nullable = false)
     private String path;
 
+    // 使用byte[]性能会更好, 此处为了可读性使用String
     @Lob
     private String bpmnXml;
 

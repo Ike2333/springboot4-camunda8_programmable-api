@@ -32,8 +32,9 @@ public class DemoWorker {
     }
 
     @JobWorker(type = "snowflake")
-    public Map<String, Object> genSnowflakeId() {
+    public Map<String, Object> genSnowflakeId(@Variable(name = "key1") String key1) {
         SnowflakeIdGenerator instance = SnowflakeIdGenerator.getInstance();
+        System.out.println("KEY1 ====" + key1);
         long id = instance.generateId();
         log.info("Snowflake: {}", id);
         return Map.of("keyC", id);

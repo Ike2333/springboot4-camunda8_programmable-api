@@ -1,10 +1,13 @@
 package com.ike.sb4camunda8.service;
 
 import com.ike.sb4camunda8.config.DynamicRouteRegistry;
+import com.ike.sb4camunda8.dto.CamundaDeployResp;
+import com.ike.sb4camunda8.dto.DeployReq;
 import com.ike.sb4camunda8.dto.RoutesDto;
 import io.camunda.client.CamundaClient;
+import io.camunda.client.api.response.Process;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.function.ServerResponse;
+import org.springframework.util.StringUtils;
 
 /**
  * 注册流程:
@@ -26,23 +29,31 @@ public class RouteRegisterService {
         this.workflowService = workflowService;
     }
 
-    public void register(RoutesDto dto) {
+    public CamundaDeployResp register(DeployReq dto) {
         // 向camunda部署工作流, 并在springboot应用中创建一个可以调用该工作流的自定义路由
         var deploy = camundaClient
                 .newDeployResourceCommand()
                 .addResourceBytes(dto.bpmnXml().getBytes(), dto.name() + ".bpmn")
                 .send()
                 .join();
-        var processId = deploy
-                .getProcesses()
-                .getFirst()
-                .getBpmnProcessId();
+
+        Process process = deploy.getProcesses().getFirst();
+        var processId = process.getBpmnProcessId();
+        int version = process.getVersion();
+        long processDefinitionKey = process.getProcessDefinitionKey();
 
         registry.register(
                 dto.method().name(),
                 dto.path(),
                 r -> workflowService.startWorkflow(r, processId)
         );
+
+        return new CamundaDeployResp(processId, version, processDefinitionKey);
+    }
+
+    public String findByProcessDefinitionKey(Long processDefinitionKey){
+        String xml = camundaClient.newProcessDefinitionGetXmlRequest(processDefinitionKey).send().join();
+        return StringUtils.hasText(xml) ? xml : null;
     }
 
     public void cancel(RoutesDto dto) {

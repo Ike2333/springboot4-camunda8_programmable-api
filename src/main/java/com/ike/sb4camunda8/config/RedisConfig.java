@@ -22,6 +22,8 @@ public class RedisConfig {
         this.objectMapper = objectMapper;
     }
 
+
+    // 注册redis pub/sub
     @Bean
     public RedisMessageListenerContainer container(RedisConnectionFactory factory, RoutesEventListener listener) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();

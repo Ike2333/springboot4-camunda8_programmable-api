@@ -4,7 +4,6 @@ import com.ike.sb4camunda8.dto.DeployReq;
 import com.ike.sb4camunda8.dto.RoutesDto;
 import com.ike.sb4camunda8.entity.Routes;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 import java.util.List;
@@ -18,8 +17,4 @@ public interface EntityDtoMapper {
 
     List<RoutesDto> convertRoutesListToDtoList(List<Routes> routesList);
 
-    Routes convertRoutesDtoToRoutes(RoutesDto dto);
-
-    @Mapping(source = "sourceName", target = "name")
-    Routes convertDeployReqToRoutesEntity(DeployReq req);
 }

@@ -1,6 +1,6 @@
 package com.ike.sb4camunda8.listener;
 
-import com.ike.sb4camunda8.dto.RoutesDto;
+import com.ike.sb4camunda8.dto.DeployReq;
 import com.ike.sb4camunda8.service.RouteRegisterService;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class RoutesEventListener implements MessageListener {
 
 
     /**
-     * 从redis中接收广播的消息用于注册新路由, 目前的缺点是首个节点会被执行两次,
+     * 从redis中接收广播的消息用于注册新路由, 目前的缺点是首个节点会被执行两次
      * TODO: 暂时无影响, 后续可能需要优化
      *
      * @param message message must not be {@literal null}.
@@ -36,8 +36,8 @@ public class RoutesEventListener implements MessageListener {
     @Override
     public void onMessage(Message message, byte @Nullable [] pattern) {
         String body = new String(message.getBody());
-        log.warn(body);
-        RoutesDto routesDto = objectMapper.readValue(body, RoutesDto.class);
-        routeRegisterService.register(routesDto);
+        log.debug("接收到的JSON: {}", body);
+        DeployReq req = objectMapper.readValue(body, DeployReq.class);
+        routeRegisterService.register(req);
     }
 }

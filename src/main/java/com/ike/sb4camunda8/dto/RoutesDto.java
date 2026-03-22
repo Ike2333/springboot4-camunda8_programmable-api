@@ -10,9 +10,10 @@ public record RoutesDto(
         String name,
         SuppHttpMethod method,
         String path,
-        String bpmnXml,
-        String uniqMethodPath,
-        Boolean enable,
+        String bpmnProcessId,
+        Long processDefinitionKey,
+        Integer version,
+        Boolean active,
         Instant createdAt,
         Instant updatedAt
 ) {

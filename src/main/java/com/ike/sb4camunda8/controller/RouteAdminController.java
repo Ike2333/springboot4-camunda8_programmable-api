@@ -313,7 +313,7 @@ public class RouteAdminController {
      *
      * @return 流程运行日志
      */
-    @GetMapping
+    @GetMapping("/job")
     @Operation(
             summary = "分页搜索作业(Job)",
             description = "基于 Camunda 引擎的作业查询。由于底层对接 ElasticSearch，采用游标分页方式，支持按关键字和结束时间范围过滤。"

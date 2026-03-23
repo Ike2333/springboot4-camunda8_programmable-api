@@ -114,11 +114,39 @@ public class RoutesService {
     }
 
     public RouteWithBpmn getById(Long id) {
-        var r = routesRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Route not found by ID: " + id));
+        var r = findById(id);
         RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(r);
         Long processDefinitionKey = r.getProcessDefinitionKey();
         String xml = routeRegisterService.findByProcessDefinitionKey(processDefinitionKey);
         routeWithBpmn.setBpmnXml(xml);
         return routeWithBpmn;
+    }
+
+    public Routes findById(Long id){
+        return routesRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Route not found by ID: " + id));
+    }
+
+
+    @Transactional
+    public void stop(Long id) {
+        var r = findById(id);
+        RoutesDto routesDto = entityDtoMapper.convertRoutesToRoutesDto(r);
+        routeRegisterService.cancel(routesDto);
+        r.setActive(false);
+        routesRepository.save(r);
+    }
+
+
+    @Transactional
+    public void start(Long id) {
+        var r = findById(id);
+        Long processDefinitionKey = r.getProcessDefinitionKey();
+        String bpmnXml = routeRegisterService.findByProcessDefinitionKey(processDefinitionKey);
+        Assert.isTrue(StringUtils.hasText(bpmnXml), () -> "BPMN XML 不存在, 当前 process definition key: " + processDefinitionKey);
+        var req = new DeployReq(r.getName(), r.getMethod(), r.getPath(), bpmnXml);
+        CamundaDeployResp resp = routeRegisterService.register(req);
+        Long newDefinitionKey = resp.processDefinitionKey();
+        Integer version = resp.version();
+        routesRepository.updateProcessDefinitionKeyAndVersionById(newDefinitionKey, version, r.getId());
     }
 }

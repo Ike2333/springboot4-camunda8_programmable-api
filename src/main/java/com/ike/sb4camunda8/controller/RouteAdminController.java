@@ -281,6 +281,7 @@ public class RouteAdminController {
     @Operation(summary = "停用路由", description = "将路由状态修改为‘停用’，暂时禁止通过该路径访问")
     @PutMapping("/deploy/{id}/stop")
     public ResponseEntity<Void> stop(@Parameter(description = "路由唯一主键 ID") @PathVariable Long id) {
+        routesService.stop(id);
         return ResponseEntity.ok().build();
     }
 
@@ -292,6 +293,7 @@ public class RouteAdminController {
     @PutMapping("/deploy/{id}/start")
     @Operation(summary = "启用路由", description = "将路由状态恢复为‘启用’")
     public ResponseEntity<Void> start(@Parameter(description = "路由唯一主键 ID") @PathVariable Long id) {
+        routesService.start(id);
         return ResponseEntity.ok().build();
     }
 

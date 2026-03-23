@@ -14,6 +14,10 @@ import io.camunda.client.api.search.enums.JobKind;
 import io.camunda.client.api.search.response.Job;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
@@ -39,6 +43,7 @@ import java.util.Map;
 /**
  * @author <a href=mailto://idiotpre@outlook.com>IKE</a> 13/3/2026
  */
+@Tag(name = "部署管理", description = "负责 BPMN 流程文件的部署, 撤回及路由映射维护")
 @RestController
 @RequestMapping("/admin/routes")
 public class RouteAdminController {
@@ -57,6 +62,26 @@ public class RouteAdminController {
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
+
+    @Tag(name = "worker查询", description = "查询camunda中可用的workers")
+    @Operation(
+            summary = "部署 BPMN XML 并注册路由",
+            description = "接收 BPMN 定义并将其转换为动态 API 路由. 注意: 路径不能以 '/routes' 开头",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "部署成功",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = """
+                                            {"message": "Route registered: POST /api/v1/process"}
+                                            """)
+                            )
+                    ),
+                    @ApiResponse(responseCode = "400", description = "请求参数非法或路径被禁止"),
+                    @ApiResponse(responseCode = "500", description = "服务器内部错误")
+            }
+    )
     @GetMapping("/workers")
     public ResponseEntity<List<Map<String, Object>>> getWorkers() {
         List<Map<String, Object>> workerList = new ArrayList<>();
@@ -123,7 +148,7 @@ public class RouteAdminController {
 
 
     @PostMapping("/debug")
-    public void debug(){
+    public void debug() {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
@@ -204,12 +229,31 @@ public class RouteAdminController {
     /**
      * 部署API
      */
+    @Tag(name = "流程部署", description = "动态路由与 BPMN 资源的注册管理")
+    @Operation(
+            summary = "部署 BPMN XML 并注册路由",
+            description = "接收 BPMN 定义并将其转换为动态 API 路由. 注意: 路径不能以 '/routes' 开头",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "部署成功",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = """
+                                            {"message": "Route registered: POST /api/v1/process"}
+                                            """)
+                            )
+                    ),
+                    @ApiResponse(responseCode = "400", description = "请求参数非法或路径被禁止"),
+                    @ApiResponse(responseCode = "500", description = "服务器内部错误")
+            }
+    )
     @PostMapping("/deploy")
     public ResponseEntity<Map<String, String>> deployBpmnXml(@RequestBody @Validated DeployReq req) {
         Assert.isTrue(!req.path().startsWith("/routes"), () -> "此路径不允许使用");
         var created = routesService.create(req);
 
-        return ResponseEntity.ok(Map.of("", "Route registered: " + created.method() + " " + created.path()));
+        return ResponseEntity.ok(Map.of("message", "Route registered: " + created.method() + " " + created.path()));
     }
 
     /**
@@ -217,30 +261,36 @@ public class RouteAdminController {
      *
      * @param id 路由ID
      */
+    @Operation(summary = "注销/删除流程路由", description = "根据 ID 彻底删除路由定义并停用相关服务")
+    @ApiResponse(responseCode = "200", description = "注销成功")
+    @ApiResponse(responseCode = "404", description = "路由 ID 不存在")
     @DeleteMapping("/deploy/{id}")
-    public ResponseEntity<Void> cancelRouteById(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelRouteById(@Parameter(description = "路由唯一主键 ID", example = "1001") @PathVariable Long id) {
         routesService.cancel(id);
         return ResponseEntity.ok().build();
     }
 
     /**
      * 设置路由状态为停用
+     *
      * @param id 路由ID
      */
+    @Operation(summary = "停用路由", description = "将路由状态修改为‘停用’，暂时禁止通过该路径访问")
     @PutMapping("/deploy/{id}/stop")
-    public ResponseEntity<Void> stop(@PathVariable Long id){
+    public ResponseEntity<Void> stop(@Parameter(description = "路由唯一主键 ID") @PathVariable Long id) {
         return ResponseEntity.ok().build();
     }
 
     /**
      * 设置路由状态为启用
+     *
      * @param id 路由ID
      */
     @PutMapping("/deploy/{id}/start")
-    public ResponseEntity<Void> start(@PathVariable Long id){
+    @Operation(summary = "启用路由", description = "将路由状态恢复为‘启用’")
+    public ResponseEntity<Void> start(@Parameter(description = "路由唯一主键 ID") @PathVariable Long id) {
         return ResponseEntity.ok().build();
     }
-
 
 
     /**
@@ -249,7 +299,11 @@ public class RouteAdminController {
      * @param keyword: 关键字, 前模糊匹配name和path
      */
     @GetMapping("/deploy")
-    public ResponseEntity<Page<RoutesDto>> findAllDeployedRoutes(String keyword, Pageable pageable) {
+    @Operation(summary = "分页查询已部署路由", description = "支持根据名称(name)或路径(path)进行前模糊匹配查询")
+    public ResponseEntity<Page<RoutesDto>> findAllDeployedRoutes(
+            @Parameter(description = "搜索关键字（匹配名称或路径）", example = "order") String keyword,
+            @Parameter(hidden = true)  Pageable pageable
+    ) {
         return ResponseEntity.ok(routesService.findAll(keyword, pageable));
     }
 
@@ -260,6 +314,11 @@ public class RouteAdminController {
      * @return 流程运行日志
      */
     @GetMapping
+    @Operation(
+            summary = "分页搜索作业(Job)",
+            description = "基于 Camunda 引擎的作业查询。由于底层对接 ElasticSearch，采用游标分页方式，支持按关键字和结束时间范围过滤。"
+    )
+    @ApiResponse(responseCode = "200", description = "返回带游标的分页数据")
     public ResponseEntity<CursorPage<Job>> search(@ParameterObject @Validated JobSearchReq req) {
         var resp = camundaClient
                 .newJobSearchRequest()

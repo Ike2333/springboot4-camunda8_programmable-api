@@ -6,6 +6,7 @@ import com.ike.sb4camunda8.dto.DeployReq;
 import com.ike.sb4camunda8.dto.RoutesDto;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.response.Process;
+import io.camunda.client.api.search.response.ProcessDefinition;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -45,10 +46,21 @@ public class RouteRegisterService {
         registry.register(
                 dto.method().name(),
                 dto.path(),
-                r -> workflowService.startWorkflow(r, processId)
+                r -> workflowService.startWorkflow(r, processId, version)
         );
 
         return new CamundaDeployResp(processId, version, processDefinitionKey);
+    }
+
+    public Integer getLatestVersionNumUseProcessId(String processId){
+        ProcessDefinition processDefinition = camundaClient.newProcessDefinitionSearchRequest()
+                .filter(p -> p.processDefinitionId(processId))
+                .sort(p -> p.version().desc())
+                .page(p -> p.limit(1))
+                .send()
+                .join()
+                .singleItem();
+        return processDefinition.getVersion();
     }
 
     public String findByProcessDefinitionKey(Long processDefinitionKey){

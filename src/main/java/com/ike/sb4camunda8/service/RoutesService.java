@@ -1,9 +1,6 @@
 package com.ike.sb4camunda8.service;
 
-import com.ike.sb4camunda8.dto.CamundaDeployResp;
-import com.ike.sb4camunda8.dto.DeployReq;
-import com.ike.sb4camunda8.dto.RouteWithBpmn;
-import com.ike.sb4camunda8.dto.RoutesDto;
+import com.ike.sb4camunda8.dto.*;
 import com.ike.sb4camunda8.entity.Routes;
 import com.ike.sb4camunda8.mappers.EntityDtoMapper;
 import com.ike.sb4camunda8.repository.RoutesRepository;
@@ -59,12 +56,9 @@ public class RoutesService {
                 resp.version(),
                 true
         );
-
         var saved = routesRepository.save(builtRoute);
-
         // 向camunda部署工作流, 并在springboot应用中注册一个可以调用该工作流的自定义路由
         stringRedisTemplate.convertAndSend("route-event-update", req);
-
         return entityDtoMapper.convertRoutesToRoutesDto(saved);
     }
 
@@ -82,12 +76,6 @@ public class RoutesService {
         }
         Assert.isTrue(StringUtils.hasText(id) && isExecutable, () -> "BPMN不合法: id为空或isExecutable为false");
         return id;
-    }
-
-
-    public void updateEnableById(Boolean state, Long id) {
-        routesRepository.updateEnableById(state, id);
-
     }
 
 
@@ -113,6 +101,7 @@ public class RoutesService {
         routesRepository.delete(entity);
     }
 
+
     public RouteWithBpmn getById(Long id) {
         var r = findById(id);
         RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(r);
@@ -122,7 +111,8 @@ public class RoutesService {
         return routeWithBpmn;
     }
 
-    public Routes findById(Long id){
+
+    public Routes findById(Long id) {
         return routesRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Route not found by ID: " + id));
     }
 
@@ -140,13 +130,54 @@ public class RoutesService {
     @Transactional
     public void start(Long id) {
         var r = findById(id);
+        CamundaDeployResp resp = getCamundaDeployResp(r);
+        Long newDefinitionKey = resp.processDefinitionKey();
+        Integer version = resp.version();
+        routesRepository.updateProcessDefinitionKeyAndVersionById(newDefinitionKey, version, r.getId());
+    }
+
+    private CamundaDeployResp getCamundaDeployResp(Routes r) {
         Long processDefinitionKey = r.getProcessDefinitionKey();
         String bpmnXml = routeRegisterService.findByProcessDefinitionKey(processDefinitionKey);
         Assert.isTrue(StringUtils.hasText(bpmnXml), () -> "BPMN XML 不存在, 当前 process definition key: " + processDefinitionKey);
         var req = new DeployReq(r.getName(), r.getMethod(), r.getPath(), bpmnXml);
-        CamundaDeployResp resp = routeRegisterService.register(req);
-        Long newDefinitionKey = resp.processDefinitionKey();
-        Integer version = resp.version();
-        routesRepository.updateProcessDefinitionKeyAndVersionById(newDefinitionKey, version, r.getId());
+        return routeRegisterService.register(req);
+    }
+
+
+    public RouteWithBpmn changeVersion(ChangeVersionReq req) {
+        Routes r = findById(req.id());
+        Integer latestVersionNumUseProcessId = routeRegisterService.getLatestVersionNumUseProcessId(r.getBpmnProcessId());
+        Assert.isTrue(req.version() > 0 && req.version() <= latestVersionNumUseProcessId, () -> "版本不支持: " + req.version());
+
+        // 更新版本号
+        r.setVersion(req.version());
+        Routes saved = routesRepository.save(r);
+        // 更新注册的流程版本
+        CamundaDeployResp resp = getCamundaDeployResp(saved);
+        var xml = routeRegisterService.findByProcessDefinitionKey(resp.processDefinitionKey());
+        RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(saved);
+        routeWithBpmn.setBpmnXml(xml);
+
+        return routeWithBpmn;
+    }
+
+
+    @Transactional
+    public RouteWithBpmn updateRoute(Long id, DeployReq req) {
+        Routes route = findById(id);
+        String processId = validateBpmnXmlAndExtractId(req.bpmnXml());
+        Assert.isTrue(processId.equals(route.getBpmnProcessId()), () -> "修改失败, BPMN XML中的ProcessID不匹配, 期望值: " + route.getBpmnProcessId() + ", 实际值: " + processId);
+
+        CamundaDeployResp registered = routeRegisterService.register(req);
+        // 更新数据库中的version/processDefinitionKey
+        Integer version = registered.version();
+        Long processDefinitionKey = registered.processDefinitionKey();
+        route.setVersion(version);
+        route.setProcessDefinitionKey(processDefinitionKey);
+        Routes saved = routesRepository.save(route);
+        RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(saved);
+        routeWithBpmn.setBpmnXml(req.bpmnXml());
+        return routeWithBpmn;
     }
 }

@@ -20,13 +20,13 @@ public class WorkflowService {
         this.camundaClient = camundaClient;
     }
 
-    public ServerResponse startWorkflow(ServerRequest request, String processId) {
+    public ServerResponse startWorkflow(ServerRequest request, String processId, Integer version) {
         Map<String, Object> vars = extractVariables(request);
 
         var instance = camundaClient
                 .newCreateInstanceCommand()
                 .bpmnProcessId(processId)
-                .latestVersion()
+                .version(version)
                 .variables(vars)
                 .withResult()
                 .send()

@@ -60,6 +60,14 @@ public class RouteAdminController {
     }
 
 
+    @PostMapping("/version")
+    @Tag(name = "更换版本号")
+    public ResponseEntity<RouteWithBpmn> changeVersion(@RequestBody ChangeVersionReq req) {
+        var resp = routesService.changeVersion(req);
+        return ResponseEntity.ok(resp);
+    }
+
+
     @Tag(name = "worker查询", description = "查询camunda中可用的workers")
     @Operation(
             summary = "部署 BPMN XML 并注册路由",
@@ -295,6 +303,17 @@ public class RouteAdminController {
     public ResponseEntity<Void> start(@Parameter(description = "路由唯一主键 ID") @PathVariable Long id) {
         routesService.start(id);
         return ResponseEntity.ok().build();
+    }
+
+
+    @Operation(summary = "更新路由和XML")
+    @PutMapping("/deploy/{id}")
+    public ResponseEntity<RouteWithBpmn> update(
+            @Parameter(description = "路由唯一主键 ID") @PathVariable Long id,
+            @Parameter(description = "请求体") @RequestBody DeployReq req
+    ) {
+        RouteWithBpmn r = routesService.updateRoute(id, req);
+        return ResponseEntity.ok(r);
     }
 
 

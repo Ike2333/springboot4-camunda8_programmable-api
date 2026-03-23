@@ -75,8 +75,7 @@ public class RouteAdminController {
                                     mediaType = "application/json",
                                     examples = @ExampleObject(value = """
                                             {"message": "Route registered: POST /api/v1/process"}
-                                            """)
-                            )
+                                            """))
                     ),
                     @ApiResponse(responseCode = "400", description = "请求参数非法或路径被禁止"),
                     @ApiResponse(responseCode = "500", description = "服务器内部错误")

@@ -2,6 +2,7 @@ package com.ike.sb4camunda8.service;
 
 import com.ike.sb4camunda8.dto.CamundaDeployResp;
 import com.ike.sb4camunda8.dto.DeployReq;
+import com.ike.sb4camunda8.dto.RouteWithBpmn;
 import com.ike.sb4camunda8.dto.RoutesDto;
 import com.ike.sb4camunda8.entity.Routes;
 import com.ike.sb4camunda8.mappers.EntityDtoMapper;
@@ -18,7 +19,6 @@ import org.springframework.util.StringUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.xml.XmlMapper;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.NoSuchElementException;
 
 /**
@@ -46,7 +46,7 @@ public class RoutesService {
         var processId = validateBpmnXmlAndExtractId(req.bpmnXml());
         boolean b = routesRepository.existsByBpmnProcessId(processId);
         if (b) {
-            throw new KeyAlreadyExistsException("Process ID 已存在: " + processId);
+            throw new IllegalArgumentException("流程创建失败, Process ID 已存在: " + processId);
         }
         CamundaDeployResp resp = routeRegisterService.register(req);
         Assert.isTrue(processId.equals(resp.processId()), () -> "ProcessID 不匹配: " + resp.processId() + "===" + processId);
@@ -111,5 +111,14 @@ public class RoutesService {
         RoutesDto dto = entityDtoMapper.convertRoutesToRoutesDto(entity);
         routeRegisterService.cancel(dto);
         routesRepository.delete(entity);
+    }
+
+    public RouteWithBpmn getById(Long id) {
+        var r = routesRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Route not found by ID: " + id));
+        RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(r);
+        Long processDefinitionKey = r.getProcessDefinitionKey();
+        String xml = routeRegisterService.findByProcessDefinitionKey(processDefinitionKey);
+        routeWithBpmn.setBpmnXml(xml);
+        return routeWithBpmn;
     }
 }

@@ -1,9 +1,6 @@
 package com.ike.sb4camunda8.controller;
 
-import com.ike.sb4camunda8.dto.CursorPage;
-import com.ike.sb4camunda8.dto.DeployReq;
-import com.ike.sb4camunda8.dto.JobSearchReq;
-import com.ike.sb4camunda8.dto.RoutesDto;
+import com.ike.sb4camunda8.dto.*;
 import com.ike.sb4camunda8.service.RouteRegisterService;
 import com.ike.sb4camunda8.service.RoutesService;
 import io.camunda.client.CamundaClient;
@@ -255,6 +252,13 @@ public class RouteAdminController {
         return ResponseEntity.ok(Map.of("message", "Route registered: " + created.method() + " " + created.path()));
     }
 
+
+    @Tag(name = "根据路由ID查询路由, 同时返回XML", description = "根据ID获取包含BPMN XML定义的路由信息")
+    @GetMapping("/deploy/{id}")
+    public ResponseEntity<RouteWithBpmn> get(@Parameter(description = "路由唯一主键 ID", example = "1001") @PathVariable Long id) {
+        return ResponseEntity.ok(routesService.getById(id));
+    }
+
     /**
      * 注销流程 - 停用并从数据库删除
      *
@@ -300,8 +304,8 @@ public class RouteAdminController {
     @GetMapping("/deploy")
     @Operation(summary = "分页查询已部署路由", description = "支持根据名称(name)或路径(path)进行前模糊匹配查询")
     public ResponseEntity<Page<RoutesDto>> findAllDeployedRoutes(
-            @Parameter(description = "搜索关键字（匹配名称或路径）", example = "order") String keyword,
-            @Parameter(hidden = true)  Pageable pageable
+            @Parameter(description = "搜索关键字（匹配名称或路径）", example = "order", required = false) String keyword,
+            @Parameter(hidden = true) Pageable pageable
     ) {
         return ResponseEntity.ok(routesService.findAll(keyword, pageable));
     }

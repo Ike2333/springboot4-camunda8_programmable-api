@@ -49,10 +49,10 @@ public class RouteRegisterService {
                 r -> workflowService.startWorkflow(r, processId, version)
         );
 
-        return new CamundaDeployResp(processId, version, processDefinitionKey);
+        return new CamundaDeployResp(processId, version, processDefinitionKey, dto.bpmnXml());
     }
 
-    public Integer getLatestVersionNumUseProcessId(String processId){
+    public Integer getLatestVersionNumUseProcessId(String processId) {
         ProcessDefinition processDefinition = camundaClient.newProcessDefinitionSearchRequest()
                 .filter(p -> p.processDefinitionId(processId))
                 .sort(p -> p.version().desc())
@@ -63,7 +63,7 @@ public class RouteRegisterService {
         return processDefinition.getVersion();
     }
 
-    public String findByProcessDefinitionKey(Long processDefinitionKey){
+    public String findByProcessDefinitionKey(Long processDefinitionKey) {
         String xml = camundaClient.newProcessDefinitionGetXmlRequest(processDefinitionKey).send().join();
         return StringUtils.hasText(xml) ? xml : null;
     }
@@ -74,5 +74,21 @@ public class RouteRegisterService {
                 dto.path(),
                 r -> workflowService.cancelWorkflow(dto.id())
         );
+    }
+
+
+    /**
+     * 根据ProcessID和version查询Process Definition
+     *
+     * @param processId process ID
+     * @param version   版本号
+     */
+    public ProcessDefinition fetchXmlUseProcessIdAndVersion(String processId, Integer version) {
+        return camundaClient.newProcessDefinitionSearchRequest()
+                .filter(p -> p.processDefinitionId(processId).version(version))
+                .send()
+                .join()
+                .singleItem();
+
     }
 }

@@ -1,7 +1,6 @@
 package com.ike.sb4camunda8.controller;
 
 import com.ike.sb4camunda8.dto.*;
-import com.ike.sb4camunda8.service.RouteRegisterService;
 import com.ike.sb4camunda8.service.RoutesService;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.annotation.JobWorker;
@@ -22,7 +21,6 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -48,15 +46,11 @@ public class RouteAdminController {
     private final CamundaClient camundaClient;
     private final RoutesService routesService;
     private final ApplicationContext applicationContext;
-    private final RouteRegisterService routeRegisterService;
-    private final StringRedisTemplate stringRedisTemplate;
 
-    public RouteAdminController(CamundaClient camundaClient, RoutesService routesService, ApplicationContext applicationContext, RouteRegisterService routeRegisterService, StringRedisTemplate stringRedisTemplate) {
+    public RouteAdminController(CamundaClient camundaClient, RoutesService routesService, ApplicationContext applicationContext) {
         this.camundaClient = camundaClient;
         this.routesService = routesService;
         this.applicationContext = applicationContext;
-        this.routeRegisterService = routeRegisterService;
-        this.stringRedisTemplate = stringRedisTemplate;
     }
 
 

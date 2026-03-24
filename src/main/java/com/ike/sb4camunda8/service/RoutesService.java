@@ -150,14 +150,18 @@ public class RoutesService {
         Integer latestVersionNumUseProcessId = routeRegisterService.getLatestVersionNumUseProcessId(r.getBpmnProcessId());
         Assert.isTrue(req.version() > 0 && req.version() <= latestVersionNumUseProcessId, () -> "版本不支持: " + req.version());
 
+        // 根据 Process ID和 version 获取 process definition
+        var definition = routeRegisterService.fetchXmlUseProcessIdAndVersion(r.getBpmnProcessId(), req.version());
+
         // 更新版本号
-        r.setVersion(req.version());
+        r.setVersion(definition.getVersion());
+        r.setProcessDefinitionKey(definition.getProcessDefinitionKey());
         Routes saved = routesRepository.save(r);
         // 更新注册的流程版本
         CamundaDeployResp resp = getCamundaDeployResp(saved);
-        var xml = routeRegisterService.findByProcessDefinitionKey(resp.processDefinitionKey());
+        // 根据definitionKey获取BPMN XML
         RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(saved);
-        routeWithBpmn.setBpmnXml(xml);
+        routeWithBpmn.setBpmnXml(resp.bpmnXml());
 
         return routeWithBpmn;
     }

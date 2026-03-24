@@ -6,6 +6,7 @@ package com.ike.sb4camunda8.dto;
 public record CamundaDeployResp(
         String processId,
         Integer version,
-        Long processDefinitionKey
+        Long processDefinitionKey,
+        String bpmnXml
 ) {
 }

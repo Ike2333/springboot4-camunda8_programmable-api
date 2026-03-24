@@ -15,15 +15,15 @@ import java.util.List;
 public interface RoutesRepository extends JpaRepository<Routes, Long>, JpaSpecificationExecutor<Routes> {
     List<Routes> findByActive(Boolean active);
 
-    @Transactional
-    @Modifying
-    @Query("update Routes r set r.active = ?1 where r.id = ?2")
-    void updateEnableById(Boolean enable, Long id);
-
     boolean existsByBpmnProcessId(String bpmnProcessId);
 
     @Transactional
     @Modifying
     @Query("update Routes r set r.processDefinitionKey = ?1, r.version = ?2 where r.id = ?3")
     void updateProcessDefinitionKeyAndVersionById(Long processDefinitionKey, Integer version, Long id);
+
+    @Transactional
+    @Modifying
+    @Query("update Routes r set r.processDefinitionKey = ?1, r.version = ?2, r.active = ?3 where r.id = ?4")
+    void updateProcessDefinitionKeyAndVersionAndActiveById(Long processDefinitionKey, Integer version, Boolean active, Long id);
 }

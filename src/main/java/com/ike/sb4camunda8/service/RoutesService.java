@@ -143,7 +143,7 @@ public class RoutesService {
         Long newDefinitionKey = resp.processDefinitionKey();
         Integer version = resp.version();
         log.info("当前启用的版本号: {}", version);
-        routesRepository.updateProcessDefinitionKeyAndVersionById(newDefinitionKey, version, r.getId());
+        routesRepository.updateProcessDefinitionKeyAndVersionAndActiveById(newDefinitionKey, version, true, r.getId());
     }
 
     private CamundaDeployResp getCamundaDeployResp(Routes r) {

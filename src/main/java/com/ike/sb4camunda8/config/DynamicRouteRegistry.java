@@ -23,9 +23,9 @@ public class DynamicRouteRegistry {
         routes.put(method + ":" + path, handler);
     }
 
-    public void cancel(String method, String path, HandlerFunction<ServerResponse> handler) {
-        var b = routes.remove(method + ":" + path, handler);
-        log.info("Path: {} is removed? {}",path, b);
+    public void cancel(String method, String path) {
+        var removedHandler = routes.remove(method + ":" + path);
+        log.info("Path: {} is removed? {}", path, removedHandler != null);
     }
 
     public Optional<HandlerFunction<ServerResponse>> find(String method, String path) {

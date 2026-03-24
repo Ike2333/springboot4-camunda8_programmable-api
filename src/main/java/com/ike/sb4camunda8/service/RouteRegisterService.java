@@ -71,8 +71,7 @@ public class RouteRegisterService {
     public void cancel(RoutesDto dto) {
         registry.cancel(
                 dto.method().name(),
-                dto.path(),
-                r -> workflowService.cancelWorkflow(dto.id())
+                dto.path()
         );
     }
 

@@ -1,6 +1,7 @@
 package com.ike.sb4camunda8.workers;
 
 import com.ike.sb4camunda8.config.SnowflakeIdGenerator;
+import com.ike.sb4camunda8.dto.DeployReq;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.annotation.Variable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -58,5 +60,21 @@ public class DemoWorker {
         var resp = restTemplate.getForEntity("https://www.github.com", String.class);
         String body = resp.getBody();
         log.info(body);
+    }
+
+
+    public static void main(String[] args) {
+        String json = """
+                {
+                    "name": "ces",
+                    "method": "POST",
+                    "path": "/ces",
+                    "bpmnXml": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\n<bpmn:definitions xmlns:xsi=\\"http://www.w3.org/2001/XMLSchema-instance\\" xmlns:bpmn=\\"http://www.omg.org/spec/BPMN/20100524/MODEL\\" xmlns:bpmndi=\\"http://www.omg.org/spec/BPMN/20100524/DI\\" xmlns:dc=\\"http://www.omg.org/spec/DD/20100524/DC\\" xmlns:di=\\"http://www.omg.org/spec/DD/20100524/DI\\" targetNamespace=\\"http://bpmn.io/schema/bpmn\\">\\n    <bpmn:process id=\\"aaa_aaa\\" isExecutable=\\"true\\">\\n      <bpmn:startEvent id=\\"Event_0r9etry\\">\\n        <bpmn:outgoing>Flow_1r5q9gy</bpmn:outgoing>\\n      </bpmn:startEvent>\\n      <bpmn:intermediateThrowEvent id=\\"Event_15iie8i\\">\\n        <bpmn:incoming>Flow_0cnnkao</bpmn:incoming>\\n      </bpmn:intermediateThrowEvent>\\n      <bpmn:sequenceFlow id=\\"Flow_1r5q9gy\\" sourceRef=\\"Event_0r9etry\\" targetRef=\\"aaa\\" />\\n      <bpmn:sequenceFlow id=\\"Flow_0cnnkao\\" sourceRef=\\"aaa\\" targetRef=\\"Event_15iie8i\\" />\\n      <bpmn:serviceTask id=\\"aaa\\">\\n        <bpmn:incoming>Flow_1r5q9gy</bpmn:incoming>\\n        <bpmn:outgoing>Flow_0cnnkao</bpmn:outgoing>\\n      </bpmn:serviceTask>\\n    </bpmn:process>\\n    <bpmndi:BPMNDiagram id=\\"BPMNDiagram_1\\">\\n      <bpmndi:BPMNPlane id=\\"BPMNPlane_1\\" bpmnElement=\\"aaa_aaa\\">\\n        <bpmndi:BPMNShape id=\\"Event_0r9etry_di\\" bpmnElement=\\"Event_0r9etry\\">\\n          <dc:Bounds x=\\"362\\" y=\\"212\\" width=\\"36\\" height=\\"36\\" />\\n        </bpmndi:BPMNShape>\\n        <bpmndi:BPMNShape id=\\"Event_15iie8i_di\\" bpmnElement=\\"Event_15iie8i\\">\\n          <dc:Bounds x=\\"792\\" y=\\"212\\" width=\\"36\\" height=\\"36\\" />\\n        </bpmndi:BPMNShape>\\n        <bpmndi:BPMNShape id=\\"Activity_1vrp57p_di\\" bpmnElement=\\"aaa\\">\\n          <dc:Bounds x=\\"540\\" y=\\"190\\" width=\\"100\\" height=\\"80\\" />\\n        </bpmndi:BPMNShape>\\n        <bpmndi:BPMNEdge id=\\"Flow_1r5q9gy_di\\" bpmnElement=\\"Flow_1r5q9gy\\">\\n          <di:waypoint x=\\"398\\" y=\\"230\\" />\\n          <di:waypoint x=\\"540\\" y=\\"230\\" />\\n        </bpmndi:BPMNEdge>\\n        <bpmndi:BPMNEdge id=\\"Flow_0cnnkao_di\\" bpmnElement=\\"Flow_0cnnkao\\">\\n          <di:waypoint x=\\"640\\" y=\\"230\\" />\\n          <di:waypoint x=\\"792\\" y=\\"230\\" />\\n        </bpmndi:BPMNEdge>\\n      </bpmndi:BPMNPlane>\\n    </bpmndi:BPMNDiagram>\\n</bpmn:definitions>"
+                }
+                """;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        DeployReq req = objectMapper.readValue(json, DeployReq.class);
+        System.out.println(req.bpmnXml());
     }
 }

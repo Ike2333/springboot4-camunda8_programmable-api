@@ -5,6 +5,8 @@ import com.ike.sb4camunda8.entity.Routes;
 import com.ike.sb4camunda8.mappers.EntityDtoMapper;
 import com.ike.sb4camunda8.repository.RoutesRepository;
 import jakarta.persistence.criteria.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,6 +26,7 @@ import java.util.NoSuchElementException;
 @Service
 public class RoutesService {
 
+    private static final Logger log = LoggerFactory.getLogger(RoutesService.class);
     private final RoutesRepository routesRepository;
     private final EntityDtoMapper entityDtoMapper;
     private final RouteRegisterService routeRegisterService;
@@ -45,7 +48,12 @@ public class RoutesService {
         if (b) {
             throw new IllegalArgumentException("流程创建失败, Process ID 已存在: " + processId);
         }
-        CamundaDeployResp resp = routeRegisterService.register(req);
+        CamundaDeployResp resp;
+        try {
+            resp = routeRegisterService.register(req);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("路由注册失败: " + e.getMessage(), e);
+        }
         Assert.isTrue(processId.equals(resp.processId()), () -> "ProcessID 不匹配: " + resp.processId() + "===" + processId);
         var builtRoute = new Routes(
                 req.name(),
@@ -130,9 +138,11 @@ public class RoutesService {
     @Transactional
     public void start(Long id) {
         var r = findById(id);
+        log.info("当前路由版本号: {}", r.getVersion());
         CamundaDeployResp resp = getCamundaDeployResp(r);
         Long newDefinitionKey = resp.processDefinitionKey();
         Integer version = resp.version();
+        log.info("当前启用的版本号: {}", version);
         routesRepository.updateProcessDefinitionKeyAndVersionById(newDefinitionKey, version, r.getId());
     }
 

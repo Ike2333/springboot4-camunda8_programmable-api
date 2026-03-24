@@ -88,7 +88,7 @@ public class RouteRegisterService {
                 .filter(p -> p.processDefinitionId(processId).version(version))
                 .send()
                 .join()
-                .singleItem();
+                .items().getFirst();
 
     }
 }

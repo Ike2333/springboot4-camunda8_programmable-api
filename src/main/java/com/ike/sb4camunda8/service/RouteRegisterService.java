@@ -7,8 +7,11 @@ import com.ike.sb4camunda8.dto.RoutesDto;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.response.Process;
 import io.camunda.client.api.search.response.ProcessDefinition;
+import io.camunda.client.api.search.response.SearchResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * 注册流程:
@@ -89,5 +92,14 @@ public class RouteRegisterService {
                 .join()
                 .items().getFirst();
 
+    }
+
+    public List<Integer> getAllVersionsByProcessId(String bpmnProcessId) {
+        SearchResponse<ProcessDefinition> join = camundaClient.newProcessDefinitionSearchRequest()
+                .filter(p -> p.processDefinitionId(bpmnProcessId))
+                .sort(p -> p.version().desc())
+                .send()
+                .join();
+        return join.items().stream().map(ProcessDefinition::getVersion).toList();
     }
 }

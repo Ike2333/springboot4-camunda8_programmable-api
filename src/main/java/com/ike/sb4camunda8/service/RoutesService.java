@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.xml.XmlMapper;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -193,5 +194,11 @@ public class RoutesService {
         RouteWithBpmn routeWithBpmn = entityDtoMapper.convertRouteEntityToBpmnStruct(saved);
         routeWithBpmn.setBpmnXml(req.bpmnXml());
         return routeWithBpmn;
+    }
+
+    public List<Integer> findAllVersionsById(Long id) {
+        Routes route = findById(id);
+        String bpmnProcessId = route.getBpmnProcessId();
+        return routeRegisterService.getAllVersionsByProcessId(bpmnProcessId);
     }
 }

@@ -62,6 +62,14 @@ public class RouteAdminController {
     }
 
 
+    @GetMapping("/version/{id}")
+    @Tag(name = "根据路由ID查询所有可用的版本号")
+    public ResponseEntity<List<Integer>> getLatestVersion(@PathVariable Long id) {
+        List<Integer> versions = routesService.findAllVersionsById(id);
+        return ResponseEntity.ok(versions);
+    }
+
+
     @Tag(name = "worker查询", description = "查询camunda中可用的workers")
     @Operation(
             summary = "部署 BPMN XML 并注册路由",

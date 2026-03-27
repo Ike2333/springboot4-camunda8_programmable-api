@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import tools.jackson.dataformat.xml.XmlMapper;
 
 import java.util.List;
@@ -32,13 +33,15 @@ public class RoutesService {
     private final EntityDtoMapper entityDtoMapper;
     private final RouteRegisterService routeRegisterService;
     private final XmlMapper xmlMapper;
+    private final ObjectMapper objectMapper;
     private final StringRedisTemplate stringRedisTemplate;
 
-    public RoutesService(RoutesRepository routesRepository, EntityDtoMapper entityDtoMapper, RouteRegisterService routeRegisterService, XmlMapper xmlMapper, StringRedisTemplate stringRedisTemplate) {
+    public RoutesService(RoutesRepository routesRepository, EntityDtoMapper entityDtoMapper, RouteRegisterService routeRegisterService, XmlMapper xmlMapper, ObjectMapper objectMapper, StringRedisTemplate stringRedisTemplate) {
         this.routesRepository = routesRepository;
         this.entityDtoMapper = entityDtoMapper;
         this.routeRegisterService = routeRegisterService;
         this.xmlMapper = xmlMapper;
+        this.objectMapper = objectMapper;
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
@@ -67,7 +70,8 @@ public class RoutesService {
         );
         var saved = routesRepository.save(builtRoute);
         // 向camunda部署工作流, 并在springboot应用中注册一个可以调用该工作流的自定义路由
-        stringRedisTemplate.convertAndSend("route-event-update", req);
+        String deployReqJson = objectMapper.writeValueAsString(req);
+        stringRedisTemplate.convertAndSend("route-event-update", deployReqJson);
         return entityDtoMapper.convertRoutesToRoutesDto(saved);
     }
 
